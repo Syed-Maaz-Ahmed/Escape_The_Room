@@ -1,0 +1,17 @@
+# Maven
+target/
+*.class
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+nbproject/
+nb-configuration.xml
+
+# System
+.DS_Store
+Thumbs.db
+
+# Custom bin
+bin/
