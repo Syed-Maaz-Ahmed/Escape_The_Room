@@ -29,5 +29,3 @@ A Java-based desktop application where you must solve riddles to escape from a s
    java -cp bin com.mycompany.oopproject.EscapeRoomGUI
    ```
 
-## License
-MIT License - Feel free to use and modify for educational purposes.
