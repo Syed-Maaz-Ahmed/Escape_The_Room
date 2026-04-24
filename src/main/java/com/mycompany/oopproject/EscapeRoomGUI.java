@@ -21,12 +21,13 @@ public class EscapeRoomGUI {
     private JButton submitButton;
     private EscapeGame game;
     private int remainingTries;
-    private Timer gameTimer;
+    private Timer gameTimer, typingTimer;
     private int secondsElapsed;
     
     // Audio Files
     private final String SOUND_GRANTED = "Access Granted Sound - Tokio 936.mp3";
     private final String SOUND_DENIED = "Access Denied - Sound Effect (HD) - SOUNDS FX.mp3";
+    private final String SOUND_WIN = "congratulation.mp3";
 
     // --- Sci-Fi / Cyberpunk Palette ---
     private final Color COLOR_BG = new Color(5, 5, 15);        // Deep void
@@ -238,7 +239,9 @@ public class EscapeRoomGUI {
         Room current = game.getCurrentRoom();
         remainingTries = 3;
         if (current != null) {
-            questionArea.setText(current.getRoomName().toUpperCase() + ":\n\n" + current.getQuestion());
+            String fullText = current.getRoomName().toUpperCase() + ":\n\n" + current.getQuestion();
+            startTypingEffect(fullText);
+            
             answerField.setText("");
             answerField.setEnabled(true);
             submitButton.setEnabled(true);
@@ -249,7 +252,8 @@ public class EscapeRoomGUI {
         } else {
             gameTimer.stop();
             progressBar.setValue(5);
-            questionArea.setText("CONGRATULATIONS! YOU'VE ESCAPED ALL THE ROOMS!");
+            playSound(SOUND_WIN);
+            startTypingEffect("CONGRATULATIONS! YOU'VE ESCAPED ALL THE ROOMS!");
             answerField.setEnabled(false);
             submitButton.setEnabled(false);
             feedbackLabel.setText("GAME COMPLETED!");
@@ -257,20 +261,45 @@ public class EscapeRoomGUI {
         }
     }
 
+    private void startTypingEffect(String text) {
+        if (typingTimer != null && typingTimer.isRunning()) typingTimer.stop();
+        
+        questionArea.setText("");
+        final int[] index = {0};
+        typingTimer = new Timer(30, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (index[0] < text.length()) {
+                    questionArea.append(String.valueOf(text.charAt(index[0])));
+                    index[0]++;
+                } else {
+                    typingTimer.stop();
+                }
+            }
+        });
+        typingTimer.start();
+    }
+
     private void handleAnswer() {
         String userInput = answerField.getText().trim();
         if (userInput.isEmpty()) return;
 
         boolean correct = game.submitAnswer(userInput);
-        playFeedbackSound(correct);
         
         if (correct) {
+            // Only play 'Access Granted' if there are more rooms.
+            // If it's the last room, we let loadRoom play the win sound.
+            if (!game.isFinished()) {
+                playSound(SOUND_GRANTED);
+            }
+            
             feedbackLabel.setText("ACCESS GRANTED.");
             feedbackLabel.setForeground(COLOR_ACCENT);
             Timer delay = new Timer(2000, e -> loadRoom());
             delay.setRepeats(false);
             delay.start();
         } else {
+            playSound(SOUND_DENIED);
             remainingTries--;
             if (remainingTries <= 0) {
                 gameTimer.stop();
@@ -288,19 +317,17 @@ public class EscapeRoomGUI {
         }
     }
 
-    private void playFeedbackSound(boolean success) {
-        String filePath = success ? SOUND_GRANTED : SOUND_DENIED;
-        File file = new File(filePath);
+    private void playSound(String fileName) {
+        File file = new File(fileName);
         if (!file.exists()) return;
 
         new Thread(() -> {
             try {
                 // Using PowerShell to play MP3 on Windows without external libraries
-                // We use double quotes inside single quotes to handle spaces properly in the path
                 String command = "powershell.exe -c \"Add-Type -AssemblyName PresentationCore; " +
                                  "$m = New-Object System.Windows.Media.MediaPlayer; " +
                                  "$m.Open('" + file.getAbsolutePath().replace("'", "''") + "'); " +
-                                 "$m.Play(); Start-Sleep -s 5\"";
+                                 "$m.Play(); Start-Sleep -s 10\"";
                 Runtime.getRuntime().exec(command);
             } catch (Exception ignored) {}
         }).start();
