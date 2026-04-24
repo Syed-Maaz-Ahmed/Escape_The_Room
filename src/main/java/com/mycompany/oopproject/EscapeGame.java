@@ -9,7 +9,7 @@ public class EscapeGame {
     public EscapeGame() {
         rooms = new Room[]{
             new PuzzleRoom("Room 1", "What has keys but can't open locks?", "Keyboard"),
-            new PuzzleRoom("Room 2", "What has hands but can’t clap?", "Clock"),
+            new PuzzleRoom("Room 2", "What has hands but can't clap?", "Clock"),
             new PuzzleRoom("Room 3", "What runs but never walks?", "Water"),
             new PuzzleRoom("Room 4", "What can travel around the world while staying in a corner?", "Stamp"),
             new PuzzleRoom("Room 5", "The more you take, the more you leave behind. What are they?", "Footsteps")
